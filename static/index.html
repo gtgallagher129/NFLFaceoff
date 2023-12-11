@@ -1,15 +1,189 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Node on Azure</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NFL Team Stats</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f2f2f2;
+      margin: 0;
+      padding: 0;
+    }
+
+    h1, h2 {
+      color: #00539f;
+    }
+
+    form {
+      background-color: #fff;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #333;
+    }
+
+    input {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 16px;
+      box-sizing: border-box;
+    }
+
+    button {
+      background-color: #00539f;
+      color: #fff;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #00284d;
+    }
+
+    #statsResult {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    p {
+      margin: 0 0 10px;
+      color: #555;
+    }
+  </style>
 </head>
 <body>
-<h1>Node.js and Express Hosted on Microsoft Azure Template</h1>
-<p>This repository serves as a template that can be used to create a Node.js and Express based website that can easily
-be hosted on Microsoft Azure.</p>
+  <h1>NFL Team Stats</h1>
+  <form id="statsForm">
+    <label for="leagueYear">League Year:</label>
+    <input type="text" id="leagueYear" name="leagueYear">
 
-Additional application functionality includes:<br />
-<a href="fetching-from-server.html">Accessing Node.js Server-Side Application Programming Interfaces (APIs)</a><br />
-<a href="fetching-remote-dog-breeds.html">Accessing Remote Application Programming Interfaces (APIs)</a>
+    <label for="team">Team:</label>
+    <input type="text" id="team" name="team">
+
+    <button type="button" onclick="getTeamStats()">Get Stats</button>
+  </form>
+
+  <div id="statsResult"></div>
+
+
+  <script>
+    async function getTeamStats() {
+      const leagueYear = document.getElementById('leagueYear').value;
+      const team = document.getElementById('team').value;
+
+      const url = `https://nfl-team-stats1.p.rapidapi.com/teamStats?leagueYear=${leagueYear}&team=${team}`;
+      const options = {
+        method: 'GET',
+        headers: {
+          'X-RapidAPI-Key': '005334a672msh4fbd23cb180755cp13aa86jsnb80b482ff225',
+          'X-RapidAPI-Host': 'nfl-team-stats1.p.rapidapi.com',
+        },
+      };
+
+      try {
+        const response = await fetch(url, options);
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch data. Status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        document.getElementById('statsResult').innerHTML = formatStats(result);
+      } catch (error) {
+        console.error(error);
+        document.getElementById('statsResult').innerHTML = `Error fetching data: ${error.message}`;
+      }
+    }
+
+    function formatStats(stats) {
+      // Display all relevant information directly to the user
+      const teamStats = stats.stats['Chicago Bears'];
+      const standingsHtml = formatStandings(teamStats.Standings);
+      const scoringHtml = formatScoring(teamStats.Scoring);
+      const defenseHtml = formatDefense(teamStats.Defense);
+
+      return `
+        <h2>Standings</h2>
+        ${standingsHtml}
+        
+        <h2>Scoring</h2>
+        ${scoringHtml}
+        
+        <h2>Defense</h2>
+        ${defenseHtml}
+      `;
+    }
+
+    function formatStandings(standings) {
+      return `
+        ${standings.W ? `<p>Wins: ${standings.W}</p>` : ''}
+        ${standings.L ? `<p>Losses: ${standings.L}</p>` : ''}
+        ${standings['W-L%'] ? `<p>Win-Loss Percentage: ${standings['W-L%']}</p>` : ''}
+        ${standings.PF ? `<p>Points For: ${standings.PF}</p>` : ''}
+        ${standings.PA ? `<p>Points Against: ${standings.PA}</p>` : ''}
+        ${standings.PD ? `<p>Point Differential: ${standings.PD}</p>` : ''}
+        ${standings.MoV ? `<p>Margin of Victory: ${standings.MoV}</p>` : ''}
+        ${standings.SoS ? `<p>Strength of Schedule: ${standings.SoS}</p>` : ''}
+        <!-- Add more details as needed -->
+      `;
+    }
+
+    function formatScoring(scoring) {
+      return `
+        ${scoring.Pts ? `<p>Total Points: ${scoring.Pts}</p>` : ''}
+        ${scoring['Pts/G'] ? `<p>Points per Game: ${scoring['Pts/G']}</p>` : ''}
+        ${scoring['RshTD'] ? `<p>Rushing Touchdowns: ${scoring['RshTD']}</p>` : ''}
+        ${scoring['RecTD'] ? `<p>Receiving Touchdowns: ${scoring['RecTD']}</p>` : ''}
+        ${scoring['PR TD'] ? `<p>Punt Return Touchdowns: ${scoring['PR TD']}</p>` : ''}
+        ${scoring['KR TD'] ? `<p>Kickoff Return Touchdowns: ${scoring['KR TD']}</p>` : ''}
+        ${scoring['FblTD'] ? `<p>Fumble Return Touchdowns: ${scoring['FblTD']}</p>` : ''}
+        ${scoring['IntTD'] ? `<p>Interception Return Touchdowns: ${scoring['IntTD']}</p>` : ''}
+        ${scoring['OthTD'] ? `<p>Other Touchdowns: ${scoring['OthTD']}</p>` : ''}
+        ${scoring['AllTD'] ? `<p>Total Touchdowns: ${scoring['AllTD']}</p>` : ''}
+        ${scoring['2PM'] ? `<p>2-Point Conversions Made: ${scoring['2PM']}</p>` : ''}
+        ${scoring['2PA'] ? `<p>2-Point Conversion Attempts: ${scoring['2PA']}</p>` : ''}
+        ${scoring['D2P'] ? `<p>Defensive 2-Point Conversions: ${scoring['D2P']}</p>` : ''}
+        ${scoring.XPM ? `<p>Extra Points Made: ${scoring.XPM}</p>` : ''}
+        ${scoring.XPA ? `<p>Extra Point Attempts: ${scoring.XPA}</p>` : ''}
+        ${scoring.FGM ? `<p>Field Goals Made: ${scoring.FGM}</p>` : ''}
+        ${scoring.FGA ? `<p>Field Goal Attempts: ${scoring.FGA}</p>` : ''}
+        ${scoring.Sfty ? `<p>Safeties: ${scoring.Sfty}</p>` : ''}
+        <!-- Add more details as needed -->
+      `;
+    }
+
+    function formatDefense(defense) {
+      return `
+        ${defense.Yds ? `<p>Total Yards Allowed: ${defense.Yds}</p>` : ''}
+        ${defense['PA/G'] ? `<p>Points Allowed per Game: ${defense['PA/G']}</p>` : ''}
+        ${defense.Ply ? `<p>Total Plays: ${defense.Ply}</p>` : ''}
+        ${defense['Y/P'] ? `<p>Yards Per Play: ${defense['Y/P']}</p>` : ''}
+        ${defense.TO ? `<p>Turnovers Forced: ${defense.TO}</p>` : ''}
+        ${defense.FL ? `<p>Fumbles Lost: ${defense.FL}</p>` : ''}
+        ${defense['1stD'] ? `<p>First Downs: ${defense['1stD']}</p>` : ''}
+        ${defense.Cmp ? `<p>Passes Completed: ${defense.Cmp}</p>` : ''}
+        ${defense.Att ? `<p>Passes Attempted: ${defense.Att}</p>` : ''}
+        ${defense.TD ? `<p>Touchdowns Allowed: ${defense.TD}</p>` : ''}
+        ${defense.Int ? `<p>Interceptions: ${defense.Int}</p>` : ''}
+        ${defense.Sk ? `<p>Sacks: ${defense.Sk}</p>` : ''}
+        ${defense.PD ? `<p>Passes Defended: ${defense.PD}</p>` : ''}
+        ${defense['Int%'] ? `<p>Interception Percentage: ${defense['Int%']}</p>` : ''}
+        ${defense['Sk%'] ? `<p>Sack Percentage: ${defense['Sk%']}</p>` : ''}
+        <!-- Add more details as needed -->
+      `;
+    }
+  </script>
 </body>
 </html>
